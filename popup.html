@@ -1,45 +1,313 @@
 <!DOCTYPE html>
 <html lang="az">
 <head>
-  <meta charset="UTF-8">
-  <title>Text AI Extractor</title>
-  <link href="./src/output.css" rel="stylesheet">
-
+    <meta charset="UTF-8">
+    <title>Text AI Extractor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background-color: #111827;
+            color: white;
+            width: 400px;
+            height: 500px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            padding: 16px;
+            background: linear-gradient(135deg, #1f2937, #374151);
+            border-bottom: 1px solid #374151;
+        }
+        
+        .title {
+            font-size: 20px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 12px;
+        }
+        
+        .nav-tabs {
+            display: flex;
+            gap: 4px;
+        }
+        
+        .nav-tab {
+            flex: 1;
+            padding: 8px 16px;
+            background: #374151;
+            border: none;
+            color: #9ca3af;
+            cursor: pointer;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .nav-tab.active {
+            background: #3b82f6;
+            color: white;
+        }
+        
+        .nav-tab:hover:not(.active) {
+            background: #4b5563;
+            color: white;
+        }
+        
+        .content {
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .menu-section {
+            display: none;
+            flex: 1;
+            flex-direction: column;
+            padding: 16px;
+            overflow: hidden;
+        }
+        
+        .menu-section.active {
+            display: flex;
+        }
+        
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        
+        .btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+        
+        .btn-primary {
+            background: #10b981;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #059669;
+        }
+        
+        .btn-secondary {
+            background: #3b82f6;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #2563eb;
+        }
+        
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+            font-size: 12px;
+            padding: 6px 12px;
+        }
+        
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+        
+        .system-prompt-section {
+            margin-bottom: 16px;
+        }
+        
+        .label {
+            display: block;
+            font-size: 12px;
+            font-weight: 500;
+            color: #d1d5db;
+            margin-bottom: 6px;
+        }
+        
+        .textarea {
+            width: 100%;
+            background: #1f2937;
+            border: 1px solid #374151;
+            color: white;
+            border-radius: 6px;
+            padding: 8px;
+            resize: none;
+            font-size: 12px;
+            font-family: inherit;
+        }
+        
+        .textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+        
+        .response-area {
+            flex: 1;
+            background: #1f2937;
+            border: 1px solid #374151;
+            border-radius: 6px;
+            padding: 12px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-height: 0;
+        }
+        
+        .message {
+            padding: 8px 12px;
+            border-radius: 8px;
+            max-width: 85%;
+            word-wrap: break-word;
+            font-size: 13px;
+            line-height: 1.4;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+        
+        .message.system {
+            align-self: center;
+            background: #374151;
+            color: #d1d5db;
+            max-width: 100%;
+            text-align: center;
+            font-size: 12px;
+        }
+        
+        .message.ai {
+            align-self: flex-start;
+            background: #374151;
+            color: white;
+        }
+        
+        .message.user {
+            align-self: flex-end;
+            background: #3b82f6;
+            color: white;
+        }
+        
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+        
+        .sender {
+            font-weight: 600;
+            font-size: 11px;
+            color: #10b981;
+        }
+        
+        .timestamp {
+            font-size: 10px;
+            color: #9ca3af;
+        }
+        
+        .archive-item {
+            background: #1f2937;
+            border: 1px solid #374151;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 8px;
+        }
+        
+        .archive-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .archive-date {
+            font-size: 12px;
+            color: #9ca3af;
+        }
+        
+        .archive-content {
+            font-size: 13px;
+            line-height: 1.4;
+            max-height: 100px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .status {
+            text-align: center;
+            color: #9ca3af;
+            font-size: 12px;
+            padding: 20px;
+        }
+        
+        .scrollbar-thin::-webkit-scrollbar {
+            width: 4px;
+        }
+        
+        .scrollbar-thin::-webkit-scrollbar-track {
+            background: #1f2937;
+        }
+        
+        .scrollbar-thin::-webkit-scrollbar-thumb {
+            background: #10b981;
+            border-radius: 2px;
+        }
+    </style>
 </head>
-<body class="bg-gray-900 text-white w-80 p-4 font-sans">
-  <h2 class="text-xl font-semibold mb-3 text-center">Text AI Extractor</h2>
-
-  <!-- Status Bar -->
-  <div id="status" class="text-gray-400 text-sm mb-3 px-2 py-1 bg-gray-800 rounded">
-    Ready to extract page content
-  </div>
-
-  <!-- Buttons -->
-  <div class="flex flex-col gap-2 mb-4">
-    <button id="readText" class="bg-green-600 hover:bg-green-500 transition rounded py-2 font-medium">
-      Extract Main Text
-    </button>
-    <button id="sendAI" class="bg-blue-600 hover:bg-blue-500 transition rounded py-2 font-medium">
-      Send to AI
-    </button>
-  </div>
-
-  <!-- System Prompt -->
-  <div class="mb-4">
-    <label for="systemPrompt" class="block text-sm font-medium text-gray-300 mb-1">
-      Sistem Təlimatı (System Prompt)
-    </label>
-    <textarea id="systemPrompt" rows="6" 
-      class="w-full bg-gray-800 border border-gray-700 text-white rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none transition"
-      placeholder="Modelin necə davranmalı olduğunu bildirin. Məsələn: Sən peşəkar bir proqramçısan və yalnız kodla cavab verirsən.">Sən peşəkar bir proqramçısan və yalnız kodla cavab verirsən.</textarea>
-  </div>
-
-  <!-- AI Response -->
-  <div>
-    <label class="block text-sm font-medium text-gray-300 mb-1">AI Cavabı</label>
-    <div id="aiResponse" class="w-full h-40 bg-gray-800 border border-gray-700 rounded-lg p-3 overflow-y-auto text-sm whitespace-pre-wrap">
-      AI cavabı buraya gələcək...
+<body>
+    <div class="header">
+        <h2 class="title">Text AI Extractor</h2>
+        <div class="nav-tabs">
+            <button class="nav-tab active" data-tab="request">Request</button>
+            <button class="nav-tab" data-tab="archive">Archive</button>
+        </div>
     </div>
-  </div>
+    
+    <div class="content">
+        <!-- Request Menu -->
+        <div class="menu-section active" id="request-menu">
+            <div class="button-group">
+                <button id="readText" class="btn btn-primary">Extract Main Text</button>
+                <button id="sendAI" class="btn btn-secondary">Send to AI</button>
+            </div>
+            
+            <div class="system-prompt-section">
+                <label class="label" for="systemPrompt">System Prompt</label>
+                <textarea id="systemPrompt" class="textarea" rows="4" placeholder="Enter system instructions for the AI model...">Sən peşəkar bir proqramçısan və yalnız kodla cavab verirsən.</textarea>
+            </div>
+            
+            <div id="aiResponse" class="response-area scrollbar-thin">
+                <div class="status">Ready to extract page content</div>
+            </div>
+        </div>
+        
+        <!-- Archive Menu -->
+        <div class="menu-section" id="archive-menu">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h3 style="font-size: 16px; font-weight: 600;">Conversation Archive</h3>
+                <button id="clearArchive" class="btn btn-danger">Clear All</button>
+            </div>
+            
+            <div id="archiveList" class="response-area scrollbar-thin">
+                <div class="status">No archived conversations yet</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="./popup.js">
+    </script>
 </body>
 </html>
