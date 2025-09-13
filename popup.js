@@ -53,30 +53,57 @@ document.addEventListener('DOMContentLoaded', () => {
 
     responseDiv.innerText = "Sending to AI...";
 
+    const systemPromptInput = document.getElementById('systemPrompt');
+
     try {
-      const apiKey = 'YOUR_OPENAI_API_KEY'; // buraya API açarını qoy
-      const prompt = `
-        Mövzu ilə bağlı dərin və maraqlı izah ver, nümunələr göstər, mümkün linklər və videolar tövsiyə et. 
-        Mətn: """${mainTextGlobal}"""
-      `;
+            const apiKey = 'AIzaSyC28kX8U3valZj3TvB_RLz_er4B3hLDGHE';
+            const systemPrompt = systemPromptInput.value.trim();
+            const userPrompt = mainTextGlobal.trim();
 
-      const res = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
-        },
-        body: JSON.stringify({
-          model: 'gpt-4',
-          messages: [{ role: 'user', content: prompt }],
-          temperature: 0.7
-        })
-      });
+            if (!apiKey || !userPrompt) {
+                alert('API açarı və istifadəçi sualı boş buraxıla bilməz.')
+                return;
+            }
 
-      const data = await res.json();
-      responseDiv.innerText = data.choices[0].message.content;
+            try {
+                const model = 'gemini-1.5-flash-latest';
+                const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`
+
+                const payload = {
+                    contents: [{
+                        parts: [{ text: userPrompt }]
+                    }]
+                };
+
+                if (systemPrompt) {
+                    payload.systemInstruction = {
+                        parts: [{ text: systemPrompt }]
+                    };
+                }
+
+                const apiResponse = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload),
+                });
+                
+                const responseData = await apiResponse.json();
+
+                if (responseData.error) {
+                    throw new Error(responseData.error.message);
+                }
+                
+                const text = responseData.candidates[0].content.parts[0].text;
+                responseDiv.textContent = text;
+
+            } catch (err) {
+                console.error(`Bir xəta baş verdi: ${err.message}`);
+                console.log(err);
+            }
     } catch (err) {
-      console.error(err);
+      console.log(err);
       responseDiv.innerText = "Error sending to AI.";
     }
   });

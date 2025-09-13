@@ -50,6 +50,21 @@
   <button id="readText">Extract Main Text</button>
   <button id="sendAI">Send to AI</button>
   <div id="aiResponse"></div>
+
+   <div class="grid md:grid-cols-2 gap-6" >
+            <!-- Sistem Promptu -->
+            <div class="space-y-2">
+                <label for="systemPrompt" class="text-sm font-medium text-gray-300">Sistem Təlimatı (System Prompt)</label>
+                <textarea id="systemPrompt" rows="8" placeholder="Modelin necə davranmalı olduğunu bildirin. Məsələn: Sən peşəkar bir proqramçısan və yalnız kodla cavab verirsən." class="w-full bg-gray-800 border border-gray-700 text-white rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200 resize-none">
+                  Sən peşəkar bir proqramçısan və yalnız kodla cavab verirsən.
+                </textarea>
+            </div>
+            <!-- Kullanıcı Promptu -->
+            <!-- <div class="space-y-2">
+                <label for="userPrompt" class="text-sm font-medium text-gray-300">İstifadəçi Sualı (User Prompt)</label>
+                <textarea id="userPrompt" rows="8" placeholder="Modelə sualınızı və ya təlimatınızı buraya yazın." class="w-full bg-gray-800 border border-gray-700 text-white rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200 resize-none"></textarea>
+            </div> -->
+        </div>
   
   <!-- <div id="aiResponse" placeholder="AI response will appear here..."></div> -->
 
