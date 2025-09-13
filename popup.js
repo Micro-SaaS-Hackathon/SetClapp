@@ -9,7 +9,8 @@
             const menuSections = document.querySelectorAll('.menu-section');
             const clearArchiveBtn = document.getElementById('clearArchive');
             const archiveList = document.getElementById('archiveList');
-            
+            clearMessagesBtn = document.getElementById('clearMessages');
+
             // Tab navigation
             navTabs.forEach(tab => {
                 tab.addEventListener('click', () => {
@@ -34,10 +35,37 @@
                 });
             });
             
+            clearMessagesBtn.addEventListener('click', () => {
+                if (confirm('Are you sure you want to clear all messages from the current conversation?')) {
+                    clearAllMessages();
+                }
+            });
+
+            function clearAllMessages() {
+                const responseDiv = document.getElementById('aiResponse');
+                
+                // Clear the response area
+                responseDiv.innerHTML = '<div class="status">Messages cleared. Ready to start fresh!</div>';
+                
+                // Reset current conversation
+                currentConversation = [];
+                
+                // Clear global text
+                mainTextGlobal = '';
+                
+                // Clear storage if available
+                if (typeof chrome !== 'undefined' && chrome.storage) {
+                    chrome.storage.local.set({ currentConversation: [] });
+                }
+            }
+            
+            
             // Extract main text
             readBtn.addEventListener('click', async () => {
                 // Clear the currently viewed conversation ID when starting fresh
-                chrome.storage.local.set({ currentViewedConversationId: null });
+                if (typeof chrome !== 'undefined' && chrome.storage) {
+                    chrome.storage.local.set({ currentViewedConversationId: null });
+                }
                 
                 let [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
                 try {
@@ -65,66 +93,74 @@
                 }
             });
             
-            // Send to AI
             aiBtn.addEventListener('click', async () => {
-                if (!mainTextGlobal) {
-                    appendMessage('System', "Please extract the main text first.");
+                var userPromptInput = document.getElementById('userPrompt');
+                var userInputText = userPromptInput.value.trim();
+                
+                // If there's no user input and no extracted text, show error
+                if (!userInputText && !mainTextGlobal) {
+                    appendMessage('System', "Please extract the main text first or enter a message.");
                     return;
+                }
+                
+                // Determine what to send as user message
+                var currentUserMessage = userInputText || mainTextGlobal.trim();
+                
+                // Add user message to conversation
+                if (userInputText) {
+                    appendMessage('User', userInputText);
+                    userPromptInput.value = ''; // Clear the input
                 }
                 
                 appendMessage('System', "Sending to AI...");
                 
-                var userPromptInput = document.getElementById('userPrompt');
                 try {
                     const apiKey = 'AIzaSyC28kX8U3valZj3TvB_RLz_er4B3hLDGHE';
-                    const systemPrompt = `You are *Oh Now I Know*, an AI assistant inside a browser extension that helps students.  
-                    Your core mission:  
-                    - First, provide a *clear and concise summary* of the given input (text, PDF, lecture, video transcript, or meeting audio).  
-                    - Then, always explain *why this knowledge matters* and *how it can be applied in real life, work, or everyday situations*.  
-
-                    Guidelines:  
-                    1. *Language Flexibility*: Respond in the same language as the input. If input is mixed, choose the dominant language. You may switch languages only if explicitly asked.  
-                    Language Rule:
-                    - Always respond in the *same language as the input text*. 
-                    - Do not switch to another language unless the user explicitly requests it. 
-                    - Azerbaijani text must always receive Azerbaijani output (never Turkish).
-                    2. *Summarization*: Keep it short, simple, and structured. Highlight key ideas, concepts, or arguments.  
-                    3. *Application/Value Section*: Always add a second part explaining:  
-                    - Where this knowledge can be used in real life (jobs, research, technology, daily problems, social impact, etc.).  
-                    - Why a student should care about this information.  
-                    - If relevant, give *local or practical examples* (e.g., how it’s useful in Azerbaijan, education, or career).  
-                    4. *Clarity over Complexity*: Avoid overly academic jargon. Use examples, analogies, or simple explanations where possible.  
-                    5. *Consistency: Never output *only a summary. Always include the “practical application” part.  
-                    6. *Format*: Structure your response in two parts:  
-                    - *Summary*  
-                    - *Why it matters / Real-life applications*  
-                    7. *Respect Context*: Stay focused on educational value. Do not go off-topic, generate unrelated stories, or produce entertainment.  
-                    8. *Audience*: Imagine your user is a student who wants motivation to study and understand why the subject is important.  
-
-                    Your role is not just to summarize but to *connect learning with life*.`;
-                    var userPrompt = mainTextGlobal.trim();
+                    const systemPrompt = document.getElementById('systemPrompt').value;
 
                     console.log('---------------------')
                     console.log(systemPrompt);
                     console.log('---------------------')
                     
-                    if (!apiKey || !userPrompt) {
-                        appendMessage('System', 'API key and user prompt cannot be empty.');
+                    if (!apiKey || !currentUserMessage) {
+                        appendMessage('System', 'API key and message cannot be empty.');
                         return;
-                    }
-
-                    if(userPromptInput.value.trim()){
-                        userPrompt = userPromptInput.value;
                     }
                     
                     const model = 'gemini-1.5-flash-latest';
                     const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
                     
+                    // Build conversation history for context
+                    const contents = [];
+                    
+                    // Add conversation history (excluding system messages)
+                    currentConversation.forEach(msg => {
+                        if (msg.sender === 'User') {
+                            contents.push({
+                                role: 'user',
+                                parts: [{ text: msg.text }]
+                            });
+                        } else if (msg.sender === 'AI') {
+                            contents.push({
+                                role: 'model',
+                                parts: [{ text: msg.text }]
+                            });
+                        }
+                    });
+                    
+                    // Add current message if it's not already in conversation history
+                    if (!userInputText) {
+                        contents.push({
+                            role: 'user',
+                            parts: [{ text: currentUserMessage }]
+                        });
+                    }
+                    
                     const payload = {
-                        contents: [{ parts: [{ text: userPrompt }] }]
+                        contents: contents
                     };
                     
-                    if (systemPrompt) {
+                    if (systemPrompt.trim()) {
                         payload.systemInstruction = { parts: [{ text: systemPrompt }] };
                     }
                     
@@ -152,9 +188,14 @@
             // Clear archive
             clearArchiveBtn.addEventListener('click', () => {
                 if (confirm('Are you sure you want to clear all archived conversations?')) {
-                    chrome.storage.local.set({ archivedConversations: [] }, () => {
+                    if (typeof chrome !== 'undefined' && chrome.storage) {
+                        chrome.storage.local.set({ archivedConversations: [] }, () => {
+                            loadArchive();
+                        });
+                    } 
+                    else {
                         loadArchive();
-                    });
+                    }
                 }
             });
             
@@ -164,6 +205,12 @@
         
         function appendMessage(sender, text) {
             const responseDiv = document.getElementById('aiResponse');
+
+            const statusDiv = responseDiv.querySelector('.status');
+            if (statusDiv) {
+                statusDiv.remove();
+            }
+
             const div = document.createElement('div');
             const timestamp = new Date().toLocaleTimeString();
             
@@ -196,87 +243,97 @@
         }
         
         function loadCurrentConversation() {
-            chrome.storage.local.get(['currentConversation'], (result) => {
-                if (result.currentConversation && result.currentConversation.length > 0) {
-                    currentConversation = result.currentConversation;
-                    const responseDiv = document.getElementById('aiResponse');
-                    responseDiv.innerHTML = '<div class="status">Current conversation loaded</div>';
-                    
-                    currentConversation.forEach(msg => {
-                        appendMessage(msg.sender, msg.text);
-                    });
-                }
-            });
+             if (typeof chrome !== 'undefined' && chrome.storage) {
+                chrome.storage.local.get(['currentConversation'], (result) => {
+                                if (result.currentConversation && result.currentConversation.length > 0) {
+                                    currentConversation = result.currentConversation;
+                                    const responseDiv = document.getElementById('aiResponse');
+                                    responseDiv.innerHTML = '<div class="status">Current conversation loaded</div>';
+                                    
+                                    currentConversation.forEach(msg => {
+                                        appendMessage(msg.sender, msg.text);
+                                    });
+                                }
+                            });
+             }
         }
         
         function saveToArchive() {
-            chrome.storage.local.get(['archivedConversations'], (result) => {
-                const archived = result.archivedConversations || [];
-                const conversationCopy = [...currentConversation];
-                
-                archived.unshift({
-                    id: Date.now(),
-                    date: new Date().toLocaleString(),
-                    messages: conversationCopy,
-                    preview: conversationCopy[conversationCopy.length - 1]?.text.substring(0, 100) + '...'
-                });
-                
-                // Keep only last 50 conversations
-                if (archived.length > 50) {
-                    archived.splice(50);
-                }
-                
-                chrome.storage.local.set({ 
-                    archivedConversations: archived,
-                    currentConversation: currentConversation
-                });
-            });
-        }
-        
-        function loadArchive() {
-            const archiveList = document.getElementById('archiveList');
-            
-            chrome.storage.local.get(['archivedConversations'], (result) => {
-                const archived = result.archivedConversations || [];
-                
-                if (archived.length === 0) {
-                    archiveList.innerHTML = '<div class="status">No archived conversations yet</div>';
-                    return;
-                }
-                
-                archiveList.innerHTML = '';
-                
-                archived.forEach(conversation => {
-                    const div = document.createElement('div');
-                    div.className = 'archive-item';
-                    div.innerHTML = `
-                        <div class="archive-header">
-                            <span class="archive-date">${conversation.date}</span>
-                            <button class="btn btn-danger" onclick="deleteConversation(${conversation.id})">Delete</button>
-                        </div>
-                        <div class="archive-content">${conversation.preview}</div>
-                    `;
+            if (typeof chrome !== 'undefined' && chrome.storage) {
+                chrome.storage.local.get(['archivedConversations'], (result) => {
+                    const archived = result.archivedConversations || [];
+                    const conversationCopy = [...currentConversation];
                     
-                    div.addEventListener('click', (e) => {
-                        if (e.target.tagName !== 'BUTTON') {
-                            viewConversation(conversation);
-                        }
+                    archived.unshift({
+                        id: Date.now(),
+                        date: new Date().toLocaleString(),
+                        messages: conversationCopy,
+                        preview: conversationCopy[conversationCopy.length - 1]?.text.substring(0, 100) + '...'
                     });
                     
-                    archiveList.appendChild(div);
+                    // Keep only last 50 conversations
+                    if (archived.length > 50) {
+                        archived.splice(50);
+                    }
+                    
+                    chrome.storage.local.set({ 
+                        archivedConversations: archived,
+                        currentConversation: currentConversation
+                    });
                 });
-            });
+            }
         }
         
-        function deleteConversation(id) {
-            chrome.storage.local.get(['archivedConversations'], (result) => {
-                const archived = result.archivedConversations || [];
-                const filtered = archived.filter(conv => conv.id !== id);
-                
-                chrome.storage.local.set({ archivedConversations: filtered }, () => {
-                    loadArchive();
+       function loadArchive() {
+            const archiveList = document.getElementById('archiveList');
+            
+            if (typeof chrome !== 'undefined' && chrome.storage) {
+                chrome.storage.local.get(['archivedConversations'], (result) => {
+                    const archived = result.archivedConversations || [];
+                    
+                    if (archived.length === 0) {
+                        archiveList.innerHTML = '<div class="status">No archived conversations yet</div>';
+                        return;
+                    }
+                    
+                    archiveList.innerHTML = '';
+                    
+                    archived.forEach(conversation => {
+                        const div = document.createElement('div');
+                        div.className = 'archive-item';
+                        div.innerHTML = `
+                            <div class="archive-header">
+                                <span class="archive-date">${conversation.date}</span>
+                                <button class="btn btn-danger" onclick="deleteConversation(${conversation.id})">Delete</button>
+                            </div>
+                            <div class="archive-content">${conversation.preview}</div>
+                        `;
+                        
+                        div.addEventListener('click', (e) => {
+                            if (e.target.tagName !== 'BUTTON') {
+                                viewConversation(conversation);
+                            }
+                        });
+                        
+                        archiveList.appendChild(div);
+                    });
                 });
-            });
+            } else {
+                archiveList.innerHTML = '<div class="status">No archived conversations yet</div>';
+            }
+        }
+
+         function deleteConversation(id) {
+            if (typeof chrome !== 'undefined' && chrome.storage) {
+                chrome.storage.local.get(['archivedConversations'], (result) => {
+                    const archived = result.archivedConversations || [];
+                    const filtered = archived.filter(conv => conv.id !== id);
+                    
+                    chrome.storage.local.set({ archivedConversations: filtered }, () => {
+                        loadArchive();
+                    });
+                });
+            }
         }
         
         function viewConversation(conversation) {
