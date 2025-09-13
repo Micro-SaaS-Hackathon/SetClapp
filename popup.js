@@ -1,4 +1,4 @@
-   let mainTextGlobal = '';
+  let mainTextGlobal = '';
         let currentConversation = [];
         
         document.addEventListener('DOMContentLoaded', () => {
@@ -36,6 +36,9 @@
             
             // Extract main text
             readBtn.addEventListener('click', async () => {
+                // Clear the currently viewed conversation ID when starting fresh
+                chrome.storage.local.set({ currentViewedConversationId: null });
+                
                 let [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
                 try {
                     await chrome.scripting.executeScript({
@@ -71,18 +74,50 @@
                 
                 appendMessage('System', "Sending to AI...");
                 
-                const systemPromptInput = document.getElementById('systemPrompt');
+                var userPromptInput = document.getElementById('userPrompt');
                 try {
                     const apiKey = 'AIzaSyC28kX8U3valZj3TvB_RLz_er4B3hLDGHE';
-                    const systemPrompt = systemPromptInput.value.trim();
-                    const userPrompt = mainTextGlobal.trim();
+                    const systemPrompt = `You are *Oh Now I Know*, an AI assistant inside a browser extension that helps students.  
+                    Your core mission:  
+                    - First, provide a *clear and concise summary* of the given input (text, PDF, lecture, video transcript, or meeting audio).  
+                    - Then, always explain *why this knowledge matters* and *how it can be applied in real life, work, or everyday situations*.  
+
+                    Guidelines:  
+                    1. *Language Flexibility*: Respond in the same language as the input. If input is mixed, choose the dominant language. You may switch languages only if explicitly asked.  
+                    Language Rule:
+                    - Always respond in the *same language as the input text*. 
+                    - Do not switch to another language unless the user explicitly requests it. 
+                    - Azerbaijani text must always receive Azerbaijani output (never Turkish).
+                    2. *Summarization*: Keep it short, simple, and structured. Highlight key ideas, concepts, or arguments.  
+                    3. *Application/Value Section*: Always add a second part explaining:  
+                    - Where this knowledge can be used in real life (jobs, research, technology, daily problems, social impact, etc.).  
+                    - Why a student should care about this information.  
+                    - If relevant, give *local or practical examples* (e.g., how it’s useful in Azerbaijan, education, or career).  
+                    4. *Clarity over Complexity*: Avoid overly academic jargon. Use examples, analogies, or simple explanations where possible.  
+                    5. *Consistency: Never output *only a summary. Always include the “practical application” part.  
+                    6. *Format*: Structure your response in two parts:  
+                    - *Summary*  
+                    - *Why it matters / Real-life applications*  
+                    7. *Respect Context*: Stay focused on educational value. Do not go off-topic, generate unrelated stories, or produce entertainment.  
+                    8. *Audience*: Imagine your user is a student who wants motivation to study and understand why the subject is important.  
+
+                    Your role is not just to summarize but to *connect learning with life*.`;
+                    var userPrompt = mainTextGlobal.trim();
+
+                    console.log('---------------------')
+                    console.log(systemPrompt);
+                    console.log('---------------------')
                     
                     if (!apiKey || !userPrompt) {
                         appendMessage('System', 'API key and user prompt cannot be empty.');
                         return;
                     }
+
+                    if(userPromptInput.value.trim()){
+                        userPrompt = userPromptInput.value;
+                    }
                     
-                    const model = 'gemini-1.5-pro-latest';
+                    const model = 'gemini-1.5-flash-latest';
                     const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
                     
                     const payload = {
