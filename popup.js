@@ -1,5 +1,6 @@
-  let mainTextGlobal = '';
-        let currentConversation = [];
+    let mainTextGlobal = '';
+    let currentConversation = [];
+                    const apiKey = 'AIzaSyC28kX8U3valZj3TvB_RLz_er4B3hLDGHE';
         
         document.addEventListener('DOMContentLoaded', () => {
             const readBtn = document.getElementById('readText');
@@ -14,6 +15,8 @@
             // Tab navigation
             navTabs.forEach(tab => {
                 tab.addEventListener('click', () => {
+                    debugger;
+
                     const targetTab = tab.dataset.tab;
                     
                     // Update active tab
@@ -115,7 +118,6 @@
                 appendMessage('System', "Sending to AI...");
                 
                 try {
-                    const apiKey = 'AIzaSyC28kX8U3valZj3TvB_RLz_er4B3hLDGHE';
                     const systemPrompt = document.getElementById('systemPrompt').value;
 
                     console.log('---------------------')
@@ -235,7 +237,8 @@
             if (sender !== 'System') {
                 currentConversation.push({ sender, text, timestamp });
                 
-                // Save current conversation and archive if it's an AI response
+                debugger;
+                
                 if (sender === 'AI') {
                     saveToArchive();
                 }
@@ -338,9 +341,11 @@
         
         function viewConversation(conversation) {
             // Switch to request tab and load conversation
+
             document.querySelector('[data-tab="request"]').click();
             
             const responseDiv = document.getElementById('aiResponse');
+            // responseDiv.innerHTML = null;
             responseDiv.innerHTML = '<div class="status">Loading archived conversation...</div>';
             
             setTimeout(() => {
@@ -363,3 +368,54 @@
         
         // Make delete function globally accessible
         window.deleteConversation = deleteConversation;
+
+
+
+//         document.getElementById('saveKey').addEventListener('click', () => {
+//   const apiKey = document.getElementById('apiKey').value;
+//   chrome.storage.local.set({ apiKey }, () => {
+//     alert('API açarı saxlandı!');
+//   });
+// });
+
+let isRecording = false;
+const startBtn = document.getElementById('startBtn');
+const stopBtn = document.getElementById('stopBtn');
+const statusDiv = document.getElementById('status');
+
+startBtn.addEventListener('click', () => {
+    debugger;
+  if (!isRecording) {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      chrome.tabs.sendMessage(tabs[0].id, { type: 'start' }, (response) => {
+        if (response && response.status === 'started') {
+          isRecording = true;
+          startBtn.disabled = true;
+          stopBtn.disabled = false;
+          statusDiv.innerText = 'Status: Record olunur...';
+        }
+      });
+    });
+  }
+});
+
+stopBtn.addEventListener('click', () => {
+  if (isRecording) {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      chrome.tabs.sendMessage(tabs[0].id, { type: 'stop' }, (response) => {
+        if (response && response.status === 'stopped') {
+          isRecording = false;
+          startBtn.disabled = false;
+          stopBtn.disabled = true;
+          statusDiv.innerText = 'Status: Dayandırıldı. Fayl saxlanıldı və xülasə hazırlanır...';
+        }
+      });
+    });
+  }
+});
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type === 'summary') {
+    document.getElementById('summary').innerText = 'Xülasə: ' + message.text;
+  }
+});

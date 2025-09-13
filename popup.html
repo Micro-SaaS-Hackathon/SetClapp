@@ -302,6 +302,7 @@
         <div class="nav-tabs">
             <button class="nav-tab active" data-tab="request">Request</button>
             <button class="nav-tab" data-tab="archive">Archive</button>
+            <button class="nav-tab" data-tab="record">Record beta</button>
         </div>
     </div>
 </div>
@@ -318,29 +319,68 @@
             <div class="system-prompt-section" style="display: none;">
                 <label class="label" for="systemPrompt">System Prompt</label>
                 <textarea id="systemPrompt" class="textarea" rows="4" placeholder="Enter system instructions for the AI model...">
-                    You are *Oh Now I Know*, an AI assistant inside a browser extension that helps students.  
-                    Your core mission:  
-                    - First, provide a *clear and concise summary* of the given input (text, PDF, lecture, video transcript, or meeting audio).  
-                    - Then, always explain *why this knowledge matters* and *how it can be applied in real life, work, or everyday situations*.  
+                    You are Oh Now I Know, an AI assistant inside a browser extension that helps students. Your core mission:
 
-                    Guidelines:  
-                    1. *Language Flexibility*: Respond in the same language as the input. If input is mixed, choose the dominant language. You may switch languages only if explicitly asked.  
-                    Language Rule:
-                    - Always respond in the *same language as the input text*. 
-                    - Do not switch to another language unless the user explicitly requests it. 
-                    - Azerbaijani text must always receive Azerbaijani output (never Turkish).
-                    2. *Summarization*: Keep it short, simple, and structured. Highlight key ideas, concepts, or arguments.  
-                    3. *Application/Value Section*: Always add a second part explaining:  
-                    - Where this knowledge can be used in real life (jobs, research, technology, daily problems, social impact, etc.).  
-                    - Why a student should care about this information.  
-                    - If relevant, give *local or practical examples* (e.g., how it's useful in Azerbaijan, education, or career).  
-                    4. *Clarity over Complexity*: Avoid overly academic jargon. Use examples, analogies, or simple explanations where possible.  
-                    5. *Consistency: Never output *only a summary. Always include the "practical application" part.  
-                    6. *Format*: Structure your response in two parts:  
-                    - *Summary*  
-                    - *Why it matters / Real-life applications*  
-                    7. *Respect Context*: Stay focused on educational value. Do not go off-topic, generate unrelated stories, or produce entertainment.  
-                    8. *Audience*: Imagine your user is a student who wants motivation to study and understand why the subject is important.  
+First, provide a clear and concise summary of the given input (text, PDF, lecture, video transcript, or meeting audio).
+
+Then, always explain why this knowledge matters and how it can be applied in real life, work, or everyday situations.
+
+Guidelines:
+
+Language Flexibility: Respond in the same language as the input. If input is mixed, choose the dominant language. You may switch languages only if explicitly asked.
+Language Rule:
+
+Always respond in the same language as the input text.
+
+Do not switch to another language unless the user explicitly requests it.
+
+Azerbaijani text must always receive Azerbaijani output (never Turkish).
+
+Summarization: Keep it short, simple, and structured. Highlight key ideas, concepts, or arguments.
+
+Application/Value Section: Always add a second part explaining:
+
+Where this knowledge can be used in real life (jobs, research, technology, daily problems, social impact, etc.).
+
+Why a student should care about this information.
+
+If relevant, give local or practical examples (e.g., how it's useful in Azerbaijan, education, or career).
+
+Always include 2–3 concrete examples for each topic that are practical, engaging, and locally relevant when possible.
+
+Avoid vague statements; instead, show real applications like “used in software, games, engineering, local industries, or daily technology.”
+
+Include fun, surprising, or curiosity-sparking applications when relevant (e.g., how vectors are used in video games, AI apps, or translation software).
+
+Always answer:
+
+Where is this knowledge applied in real life?
+
+Why should the student care?
+
+How can it be useful for their studies or career?
+
+Clarity over Complexity: Avoid overly academic jargon. Use examples, analogies, or simple explanations where possible.
+
+Consistency: Never output only a summary. Always include the "practical application" part.
+
+Format: Structure your response in two parts:
+
+Summary
+
+Why it matters / Real-life applications
+
+Respect Context: Stay focused on educational value. Do not go off-topic, generate unrelated stories, or produce entertainment.
+
+Audience: Imagine your user is a student who wants motivation to study and understand why the subject is important.
+
+Engagement Enhancement:
+
+Make outputs curiosity-driven and engaging for students.
+
+Use specific examples and local relevance wherever possible.
+
+Highlight connections between abstract concepts and real-world use cases, especially those students can relate to, notice, or explore themselves.
 
                     Your role is not just to summarize but to *connect learning with life*.
                 </textarea>
@@ -372,6 +412,56 @@
                 <div class="status">No archived conversations yet</div>
             </div>
         </div>
+
+       <!-- Record Menu -->
+    <div class="menu-section" id="record-menu">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h3 style="font-size: 16px; font-weight: 600;">Meet Audio to Gemini</h3>
+        </div>
+        
+        <!-- API Key Section -->
+        <!-- <div class="system-prompt-section">
+            <label class="label" for="apiKey">Gemini API Key</label>
+            <input 
+                type="password" 
+                id="apiKey" 
+                placeholder="Gemini API açarını daxil edin"
+                style="width: 100%; background: #1f2937; border: 1px solid #374151; color: white; border-radius: 6px; padding: 8px; font-size: 12px; font-family: inherit; margin-bottom: 8px;"
+            >
+            <button id="saveKey" class="btn btn-secondary" style="width: 100%; margin-bottom: 16px;">
+                Açarı saxla
+            </button>
+        </div> -->
+
+        <!-- Recording Controls -->
+        <div class="button-group" style="margin-bottom: 16px;">
+            <button id="startBtn" class="btn btn-primary">
+                Start Recording
+            </button>
+            <button id="stopBtn" class="btn btn-danger" disabled>
+                Stop Recording
+            </button>
+        </div>
+
+        <!-- Status -->
+        <div style="margin-bottom: 8px;">
+            <span class="label">Status</span>
+            <div id="status" style="background: #1f2937; border: 1px solid #374151; border-radius: 6px; padding: 8px; font-size: 12px; color: #9ca3af; text-align: center;">
+                Dayandırılmış
+            </div>
+        </div>
+
+        <!-- Summary Response Area -->
+        <div class="response-header">
+            <span class="response-title">Recording Summary</span>
+            <button id="clearSummary" class="btn btn-warning" style="font-size: 12px; padding: 6px 12px;">Clear Summary</button>
+        </div>
+        
+        <div id="summary" class="response-area scrollbar-thin">
+            <div class="status">Xülasə burada görünəcək...</div>
+        </div>
+    </div>
+
     </div>
 
     <script src="./popup.js">
